@@ -20,7 +20,7 @@ let audioBuffer = new Int16Array(0);
 // Listen for messages from popup, content script, and offscreen document
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'startListening') {
-        startListening(request.apiKey, sendResponse, request.streamId, request.tabId);
+        startListening(request.apiKey, sendResponse, request.streamId, request.tabId, request.captureMethod);
         return true; // Keep channel open for async response
     } else if (request.action === 'stopListening') {
         stopListening();
@@ -38,6 +38,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 });
             });
         });
+    } else if (request.action === 'audioTrackMuted' || request.action === 'audioTrackEnded') {
+        // Forward audio track warnings to popup
+        chrome.runtime.sendMessage({
+            action: 'audioWarning',
+            message: request.message
+        }).catch(() => {});
     } else if (request.action === 'audioData') {
         // Handle audio data from offscreen document
         if (socket && socket.readyState === WebSocket.OPEN && sessionReady && isListening) {
@@ -132,11 +138,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
 });
 
-async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFromPopup) {
+async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFromPopup, captureMethodFromPopup) {
     try {
+        // Stop any existing capture first to avoid "active stream" error
+        if (isListening) {
+            console.log('⚠️ Already listening, stopping previous session...');
+            stopListening();
+            // Wait a moment for cleanup
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         // Use stream ID from popup if provided (user activation required)
         let streamId = streamIdFromPopup;
         let currentTabId = tabIdFromPopup;
+        const captureMethod = captureMethodFromPopup || 'tabCapture';
         
         // If not provided, try to get it (might fail without user activation)
         if (!streamId) {
@@ -187,7 +202,7 @@ async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFrom
         const captureResponse = await new Promise((resolve) => {
             const timeout = setTimeout(() => {
                 resolve({ success: false, error: 'Timeout waiting for offscreen document' });
-            }, 5000);
+            }, 10000); // Increased timeout for displayMedia
             
             // Set up one-time listener for response
             const listener = (message, sender, sendResponse) => {
@@ -201,10 +216,11 @@ async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFrom
             
             chrome.runtime.onMessage.addListener(listener);
             
-            // Send message to offscreen document with stream ID
+            // Send message to offscreen document
             chrome.runtime.sendMessage({
                 action: 'captureTab',
-                streamId: streamId
+                streamId: streamId,
+                captureMethod: captureMethod
             }, (response) => {
                 // Handle direct response if channel is still open
                 if (chrome.runtime.lastError) {
@@ -220,10 +236,21 @@ async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFrom
         });
 
         if (!captureResponse || !captureResponse.success) {
-            sendResponse({ 
-                success: false, 
-                error: captureResponse?.error || 'Failed to capture audio. Please check permissions.' 
-            });
+            const errorMsg = captureResponse?.error || 'Failed to capture audio. Please check permissions.';
+            console.error('❌ Capture failed:', errorMsg);
+            
+            // If displayMedia failed, suggest using tabCapture
+            if (captureMethod === 'displayMedia' && errorMsg.includes('Not supported') || errorMsg.includes('getDisplayMedia')) {
+                sendResponse({ 
+                    success: false, 
+                    error: 'Screen Share Audio not supported in this context. Please use "Tab Capture" method instead (note: it will mute Meet audio, but transcriptions will work).' 
+                });
+            } else {
+                sendResponse({ 
+                    success: false, 
+                    error: errorMsg 
+                });
+            }
             return;
         }
 
@@ -247,8 +274,8 @@ async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFrom
 
         // Connect to AssemblyAI WebSocket
         // Add format_turns=true to get formatted transcripts
-        // Adjust turn detection parameters for better detection
-        const wsUrl = `wss://streaming.assemblyai.com/v3/ws?token=${token}&sample_rate=16000&speech_model=universal-streaming-multilingual&encoding=pcm_s16le&format_turns=true&end_of_turn_confidence_threshold=0.3&min_end_of_turn_silence_when_confident=300&max_turn_silence=2000`;
+        // Adjust turn detection parameters for better detection and accuracy
+        const wsUrl = `wss://streaming.assemblyai.com/v3/ws?token=${token}&sample_rate=16000&speech_model=universal-streaming-multilingual&encoding=pcm_s16le&format_turns=true&end_of_turn_confidence_threshold=0.5&min_end_of_turn_silence_when_confident=500&max_turn_silence=3000&word_boost=["interview","yourself","experience","project","background","skills"]`;
         console.log('🔗 Connecting to:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
         socket = new WebSocket(wsUrl);
 
