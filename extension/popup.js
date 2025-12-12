@@ -5,7 +5,10 @@ const status = document.getElementById('status');
 const toggleBtn = document.getElementById('toggleBtn');
 const transcriptionSection = document.getElementById('transcriptionSection');
 const transcriptionOutput = document.getElementById('transcriptionOutput');
+const gptSection = document.getElementById('gptSection');
+const gptOutput = document.getElementById('gptOutput');
 let finalTranscriptionText = '';
+let qaPairs = []; // Store all Q&A pairs
 
 // Load saved API key
 chrome.storage.sync.get(['assemblyai_api_key', 'showInMeet'], (result) => {
@@ -34,6 +37,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'transcription') {
         console.log('📝 Popup received transcription:', request.text, 'isFinal:', request.isFinal);
         updateTranscription(request.text, request.isFinal);
+    } else if (request.action === 'gptResponse') {
+        console.log(`🤖 Popup received GPT response for Q${request.questionNumber}:`, request.answer);
+        if (request.allPairs) {
+            qaPairs = request.allPairs;
+        } else {
+            // Fallback: add single pair
+            qaPairs.push({
+                number: request.questionNumber,
+                question: request.question,
+                answer: request.answer
+            });
+        }
+        updateGptResponse();
     }
     return false;
 });
@@ -58,6 +74,42 @@ function updateTranscription(text, isFinal) {
     
     // Auto-scroll
     transcriptionOutput.scrollTop = transcriptionOutput.scrollHeight;
+}
+
+function updateGptResponse() {
+    if (!gptSection || !gptOutput) {
+        console.log('⚠️ GPT UI elements not found');
+        return;
+    }
+    
+    if (qaPairs.length === 0) {
+        gptSection.style.display = 'none';
+        return;
+    }
+    
+    gptSection.style.display = 'block';
+    
+    // Build formatted Q&A display - ensure sorted by number
+    const sortedPairs = [...qaPairs].sort((a, b) => a.number - b.number);
+    let html = '';
+    
+    if (sortedPairs.length === 0) {
+        html = '<div style="color: #666; font-style: italic; text-align: center; padding: 20px;">Waiting for questions and answers...</div>';
+    } else {
+        sortedPairs.forEach(pair => {
+            html += `<div style="margin-bottom: 20px; padding: 12px; background: white; border-radius: 6px; border-left: 3px solid #667eea;">`;
+            html += `<div style="font-weight: 600; color: #667eea; margin-bottom: 8px;">📋 Question ${pair.number}:</div>`;
+            html += `<div style="color: #333; margin-bottom: 12px; font-style: italic; padding-left: 8px;">"${pair.question}"</div>`;
+            html += `<div style="font-weight: 600; color: #10b981; margin-bottom: 8px;">💡 Answer ${pair.number}:</div>`;
+            html += `<div style="color: #1f2937; line-height: 1.6; padding-left: 8px;">${pair.answer}</div>`;
+            html += `</div>`;
+        });
+    }
+    
+    gptOutput.innerHTML = html;
+    console.log(`✅ Updated GPT responses in popup: ${qaPairs.length} Q&A pairs`);
+    // Auto-scroll
+    gptOutput.scrollTop = gptOutput.scrollHeight;
 }
 
 // Check if already listening
@@ -135,6 +187,9 @@ startBtn.addEventListener('click', async () => {
             transcriptionSection.style.display = 'block';
             transcriptionOutput.textContent = 'Waiting for audio...\n\n💡 Debug steps:\n1. Open chrome://extensions/\n2. Click "service worker" under this extension\n3. Check console for logs\n4. Speak in Google Meet call\n\nLook for:\n- 🎤 Audio chunks being sent\n- 📝 Transcriptions received';
             finalTranscriptionText = '';
+            qaPairs = []; // Reset Q&A pairs for new session
+            if (gptOutput) gptOutput.innerHTML = '';
+            if (gptSection) gptSection.style.display = 'none';
             
             // Test message listener is working
             console.log('✅ Popup ready, listening for transcriptions...');
@@ -162,5 +217,8 @@ stopBtn.addEventListener('click', () => {
         status.classList.remove('active');
         transcriptionSection.style.display = 'none';
         finalTranscriptionText = '';
+        qaPairs = []; // Clear Q&A pairs
+        if (gptOutput) gptOutput.innerHTML = '';
+        if (gptSection) gptSection.style.display = 'none';
     });
 });

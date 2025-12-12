@@ -1,0 +1,22 @@
+[
+  {
+    "id": "profile",
+    "title": "Candidate background",
+    "text": "Full-stack developer with focus on TypeScript/JavaScript. Strengths in React, Next.js, Node.js/Express, and Chrome extensions. Experience with WebSockets, real-time audio streaming, and LLM integrations. Familiar with testing (Jest) and cloud basics. Comfortable optimizing performance and debugging complex browser issues."
+  },
+  {
+    "id": "project-meet-assistant",
+    "title": "Google Meet assistant project",
+    "text": "Built a Chrome extension that captures Google Meet audio, streams it to AssemblyAI for real-time transcription, and will route transcripts to GPT for replies. Uses Manifest V3 service worker, offscreen document for audio capture, AudioWorklet for processing, and a backend token proxy. Handles buffering to meet API chunk requirements and robust logging for debugging."
+  },
+  {
+    "id": "project-web-rtc",
+    "title": "Real-time communication work",
+    "text": "Implemented real-time features with WebRTC/WebSockets, including audio processing pipelines, buffering, and latency-sensitive messaging. Comfortable handling binary audio formats (PCM s16le), gain control, and chunk sizing for streaming APIs."
+  },
+  {
+    "id": "interview-notes",
+    "title": "Interview preparation notes",
+    "text": "Focus on concise, confident answers. Highlight strengths in debugging, real-time systems, and quick prototyping. Mention ability to integrate LLMs with streaming inputs and build reliable Chrome extensions for productivity."
+  }
+]
