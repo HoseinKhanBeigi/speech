@@ -5,6 +5,9 @@ let currentTabId = null;
 let offscreenDocumentId = null;
 let audioChunkCount = 0; // Track audio chunks sent
 let audioWarningShown = false; // Track if warning was shown
+let conversationHistory = []; // Track conversation for GPT context
+let questionAnswerPairs = []; // Track numbered Q&A pairs: [{question: "...", answer: "...", number: 1}, ...]
+let currentQuestionNumber = 0; // Current question number
 
 // Audio buffering - AssemblyAI requires chunks between 50-1000ms
 // At 16kHz, 50ms = 800 samples, 1000ms = 16000 samples
@@ -325,6 +328,28 @@ async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFrom
                             // Popup might not be open, that's okay
                             console.log('ℹ️ Popup not open (this is normal if popup is closed)');
                         });
+
+                        // Trigger RAG + GPT answer when we have an end-of-turn (or formatted) transcript
+                        // Only treat as a new question if it's a complete turn (end_of_turn = true)
+                        // This ensures we don't count partial/interim transcripts as separate questions
+                        if (endOfTurn) {
+                            // Increment question number for new complete question
+                            currentQuestionNumber++;
+                            console.log(`📝 New Question ${currentQuestionNumber} detected: "${transcript.substring(0, 80)}..."`);
+                            fetchRagAnswer(transcript, currentQuestionNumber).catch(err => {
+                                console.error('❌ RAG/GPT call failed:', err);
+                            });
+                        } else if (formatted) {
+                            // For formatted but not end-of-turn, use current question number (might be continuation)
+                            // Only call if we don't already have an answer for this question
+                            const hasAnswer = questionAnswerPairs.some(pair => pair.number === currentQuestionNumber);
+                            if (!hasAnswer && currentQuestionNumber > 0) {
+                                console.log(`📝 Formatted transcript for Question ${currentQuestionNumber}: "${transcript.substring(0, 80)}..."`);
+                                fetchRagAnswer(transcript, currentQuestionNumber).catch(err => {
+                                    console.error('❌ RAG/GPT call failed:', err);
+                                });
+                            }
+                        }
                     } else {
                         console.log('ℹ️ Turn message with empty transcript (silence or no speech detected)');
                     }
@@ -430,4 +455,99 @@ function stopListening() {
     currentTabId = null;
     audioChunkCount = 0; // Reset counter
     audioWarningShown = false; // Reset warning flag
+    conversationHistory = []; // Reset conversation history
+    questionAnswerPairs = []; // Reset Q&A pairs
+    currentQuestionNumber = 0; // Reset question number
+}
+
+// Fetch GPT answer using local RAG service
+async function fetchRagAnswer(transcript, questionNumber) {
+    if (!transcript || !transcript.trim()) {
+        console.log('⚠️ Skipping RAG call - empty transcript');
+        return;
+    }
+    
+    // Check if we already have an answer for this question number
+    const existingPair = questionAnswerPairs.find(pair => pair.number === questionNumber);
+    if (existingPair) {
+        console.log(`ℹ️ Already have Answer ${questionNumber}, skipping duplicate call`);
+        return;
+    }
+    
+    console.log(`🔍 Calling RAG/GPT for Question ${questionNumber}:`, transcript.substring(0, 100) + '...');
+    
+    try {
+        // Add transcript to conversation history as interviewer question
+        conversationHistory.push({
+            role: 'user',
+            content: `Interviewer Question ${questionNumber}: "${transcript}"`
+        });
+        
+        // Keep only last 10 messages to avoid token limits
+        if (conversationHistory.length > 10) {
+            conversationHistory = conversationHistory.slice(-10);
+        }
+        
+        const response = await fetch('http://localhost:3000/api/rag/answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                transcript: transcript.trim(),
+                chatHistory: conversationHistory.slice(0, -1) // Send history without current message
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ RAG API error:', response.status, errorText);
+            throw new Error(`RAG answer failed: ${response.status} ${errorText}`);
+        }
+
+        const { answer, context } = await response.json();
+        console.log(`✅ GPT Answer ${questionNumber} received:`, answer);
+        console.log('📚 Context used:', context?.map(c => c.title).join(', ') || 'none');
+
+        // Add GPT response to conversation history
+        conversationHistory.push({
+            role: 'assistant',
+            content: answer
+        });
+
+        // Store Q&A pair (replace if exists, otherwise add)
+        const existingIndex = questionAnswerPairs.findIndex(pair => pair.number === questionNumber);
+        const newPair = {
+            number: questionNumber,
+            question: transcript.trim(),
+            answer: answer
+        };
+        
+        if (existingIndex >= 0) {
+            questionAnswerPairs[existingIndex] = newPair;
+            console.log(`🔄 Updated Q&A pair ${questionNumber}`);
+        } else {
+            questionAnswerPairs.push(newPair);
+            console.log(`➕ Added new Q&A pair ${questionNumber}`);
+        }
+        
+        // Sort pairs by number to ensure correct order
+        questionAnswerPairs.sort((a, b) => a.number - b.number);
+
+        chrome.runtime.sendMessage({
+            action: 'gptResponse',
+            questionNumber: questionNumber,
+            question: transcript.trim(),
+            answer,
+            context,
+            allPairs: [...questionAnswerPairs] // Send copy of all pairs for display
+        }).then(() => {
+            console.log(`✅ Sent Q&A pair ${questionNumber} to popup (total: ${questionAnswerPairs.length} pairs)`);
+        }).catch(err => {
+            console.error('❌ Failed to send GPT response to popup:', err);
+        });
+    } catch (error) {
+        console.error('❌ Error fetching RAG answer:', error);
+        console.error('   Error details:', error.message);
+    }
 }

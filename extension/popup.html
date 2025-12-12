@@ -199,6 +199,28 @@
         </div>
     </div>
 
+    <div class="section" id="gptSection" style="display: none;">
+        <label>GPT Response (with your background):</label>
+        <div id="gptOutput" style="
+            background: #eef2ff;
+            border: 2px solid #cbd5ff;
+            border-radius: 6px;
+            padding: 12px;
+            min-height: 80px;
+            max-height: 240px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #1f2937;
+            margin-top: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        "></div>
+        <div style="font-size: 11px; color: #4f46e5; margin-top: 8px; font-style: italic;">
+            Uses local RAG + GPT. Keep server running and set OPENAI_API_KEY.
+        </div>
+    </div>
+
     <script src="popup.js"></script>
 </body>
 </html>
