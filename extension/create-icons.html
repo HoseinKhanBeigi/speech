@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Extension Icons</title>
+</head>
+<body>
+    <h2>Extension Icons Generator</h2>
+    <p>Open browser console and run the code below, or use this page to generate icons.</p>
+    <script>
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // White microphone icon (simple)
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            // Mic body
+            ctx.arc(size/2, size/2 - size/8, size/4, 0, Math.PI * 2);
+            ctx.fill();
+            // Mic stand
+            ctx.fillRect(size/2 - size/16, size/2 + size/8, size/8, size/4);
+            ctx.fillRect(size/2 - size/6, size/2 + size/3, size/3, size/16);
+            
+            return canvas;
+        }
+        
+        [16, 48, 128].forEach(size => {
+            const canvas = createIcon(size);
+            const link = document.createElement('a');
+            link.download = `icon${size}.png`;
+            link.href = canvas.toDataURL();
+            link.textContent = `Download icon${size}.png`;
+            link.style.display = 'block';
+            link.style.margin = '10px';
+            document.body.appendChild(link);
+        });
+    </script>
+</body>
+</html>

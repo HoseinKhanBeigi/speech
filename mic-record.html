@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microphone Speech to Text</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .api-key-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .api-key-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .api-key-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .api-key-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .api-key-section .info {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .api-key-section .info a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .record-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .record-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .record-btn.recording {
+            background: #ff6b6b;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .stop-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .stop-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .transcribe-btn {
+            background: #51cf66;
+            color: white;
+        }
+
+        .transcribe-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(81, 207, 102, 0.4);
+        }
+
+        .clear-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #666;
+            min-height: 20px;
+        }
+
+        .status.recording {
+            color: #ff6b6b;
+            font-weight: 600;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status.processing {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .audio-preview {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .audio-preview audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .text-output {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .text-output:empty::before {
+            content: "Your transcribed text will appear here...";
+            color: #999;
+            font-style: italic;
+        }
+
+        .mic-icon {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Microphone Speech to Text</h1>
+        
+        <div class="api-key-section">
+            <label for="apiKey">AssemblyAI API Key:</label>
+            <input type="password" id="apiKey" placeholder="Enter your API key" />
+            <div class="info">
+                Get your free API key at <a href="https://www.assemblyai.com/" target="_blank">assemblyai.com</a>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="recordBtn" class="record-btn">
+                <svg class="mic-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+                Start Recording
+            </button>
+            <button id="stopBtn" class="stop-btn" disabled>
+                Stop Recording
+            </button>
+            <button id="transcribeBtn" class="transcribe-btn" disabled>
+                Transcribe
+            </button>
+            <button id="clearBtn" class="clear-btn">
+                Clear
+            </button>
+        </div>
+
+        <div class="status" id="status">Ready to record</div>
+
+        <div class="audio-preview" id="audioPreview" style="display: none;">
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Recorded Audio:</div>
+            <audio id="audioPlayer" controls></audio>
+        </div>
+
+        <div class="text-output" id="output"></div>
+    </div>
+
+    <script>
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+        const apiKeyInput = document.getElementById('apiKey');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedBlob = null;
+
+        // Load API key from localStorage
+        const savedApiKey = localStorage.getItem('assemblyai_api_key');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+        }
+
+        apiKeyInput.addEventListener('input', () => {
+            localStorage.setItem('assemblyai_api_key', apiKeyInput.value);
+        });
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(recordedBlob);
+                    audioPlayer.src = audioUrl;
+                    audioPreview.style.display = 'block';
+                    
+                    // Stop all tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                
+                recordBtn.disabled = true;
+                stopBtn.disabled = false;
+                transcribeBtn.disabled = true;
+                recordBtn.classList.add('recording');
+                status.textContent = '🔴 Recording...';
+                status.classList.add('recording');
+
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                status.textContent = 'Error: Could not access microphone. Please allow microphone access.';
+                status.style.color = '#ff6b6b';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+
+            recordBtn.disabled = false;
+            stopBtn.disabled = true;
+            transcribeBtn.disabled = false;
+            recordBtn.classList.remove('recording');
+            status.textContent = 'Recording stopped. Click "Transcribe" to convert to text.';
+            status.classList.remove('recording');
+            status.style.color = '#666';
+        }
+
+        async function transcribeAudio() {
+            if (!recordedBlob) {
+                status.textContent = 'No audio recorded. Please record first.';
+                status.style.color = '#ff6b6b';
+                return;
+            }
+
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                status.textContent = 'Please enter your AssemblyAI API key';
+                status.style.color = '#ff6b6b';
+                return;
+            }
+
+            try {
+                transcribeBtn.disabled = true;
+                status.textContent = 'Uploading audio...';
+                status.classList.add('processing');
+                status.style.color = '#667eea';
+
+                // Upload audio file
+                const formData = new FormData();
+                formData.append('file', recordedBlob, 'recording.webm');
+
+                const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
+                    method: 'POST',
+                    headers: {
+                        'authorization': apiKey
+                    },
+                    body: recordedBlob
+                });
+
+                if (!uploadResponse.ok) {
+                    const error = await uploadResponse.text();
+                    throw new Error(`Upload failed: ${error}`);
+                }
+
+                const { upload_url } = await uploadResponse.json();
+
+                status.textContent = 'Transcribing...';
+
+                // Start transcription
+                const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+                    method: 'POST',
+                    headers: {
+                        'authorization': apiKey,
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        audio_url: upload_url,
+                        speech_model: 'universal'
+                    })
+                });
+
+                if (!transcriptResponse.ok) {
+                    const error = await transcriptResponse.text();
+                    throw new Error(`Transcription failed: ${error}`);
+                }
+
+                const { id } = await transcriptResponse.json();
+
+                // Poll for results
+                let transcript = null;
+                while (!transcript || transcript.status !== 'completed') {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    const statusResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${id}`, {
+                        headers: {
+                            'authorization': apiKey
+                        }
+                    });
+
+                    transcript = await statusResponse.json();
+
+                    if (transcript.status === 'error') {
+                        throw new Error(transcript.error || 'Transcription failed');
+                    }
+
+                    if (transcript.status === 'processing' || transcript.status === 'queued') {
+                        status.textContent = `Status: ${transcript.status}...`;
+                    }
+                }
+
+                // Display result
+                output.textContent = transcript.text;
+                status.textContent = '✅ Transcription complete!';
+                status.classList.remove('processing');
+                status.style.color = '#51cf66';
+                transcribeBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error transcribing:', error);
+                status.textContent = `Error: ${error.message}`;
+                status.classList.remove('processing');
+                status.style.color = '#ff6b6b';
+                transcribeBtn.disabled = false;
+            }
+        }
+
+        recordBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        transcribeBtn.addEventListener('click', transcribeAudio);
+        clearBtn.addEventListener('click', () => {
+            output.textContent = '';
+            recordedBlob = null;
+            audioPreview.style.display = 'none';
+            audioPlayer.src = '';
+            status.textContent = 'Ready to record';
+            status.style.color = '#666';
+        });
+    </script>
+</body>
+</html>
+

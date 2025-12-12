@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Google Meet Speech to Text Assistant",
+  "version": "1.0.0",
+  "description": "Real-time speech-to-text transcription for Google Meet interviews with GPT integration",
+  "permissions": [
+    "tabCapture",
+    "storage",
+    "activeTab",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://streaming.assemblyai.com/*",
+    "https://api.assemblyai.com/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["audio-processor.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
