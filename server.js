@@ -241,25 +241,31 @@ const server = http.createServer(async (req, res) => {
                 const messages = [
                     {
                         role: 'system',
-                        content: `You are an interview assistant helping a candidate prepare answers. Your job is to:
-1. FIRST: Analyze what the interviewer is asking - what are they really trying to learn?
-2. SECOND: Think about what makes a strong answer to that specific question
-3. THIRD: Craft a natural, confident response the candidate can say, using their background information
-4. Keep answers concise (2-4 sentences) unless the question requires more detail
-5. Make it sound conversational and authentic, not robotic
-6. Reference specific skills/projects from the background when relevant
+                        content: `You are an interview assistant. Help the candidate answer questions simply and clearly.
 
-IMPORTANT: Don't just repeat what the candidate said. Think about what the interviewer wants to know and craft a thoughtful answer that addresses their question using the candidate's background.
+RULES:
+1. Use SIMPLE, everyday words - no fancy or complex words
+2. Keep it short and clear (2-3 sentences max)
+3. Sound natural - like talking to a friend, not a formal speech
+4. Use the candidate's background but explain it simply
+5. No showing off or using big words
+6. Be direct and honest
 
-Background information about the candidate:
+Example of GOOD answer:
+"I've worked with React for 8 years. I built many apps and led teams. I also know AI tools like LangChain."
+
+Example of BAD answer (too fancy):
+"I've leveraged React's ecosystem extensively over 8 years, architecting scalable solutions and orchestrating cross-functional teams while integrating cutting-edge AI technologies."
+
+Background about the candidate:
 ${context || 'No background available.'}`
                     },
                     ...chatHistory,
                     {
                         role: 'user',
-                        content: `The interviewer just said: "${transcript}"
+                        content: `Interviewer asked: "${transcript}"
 
-Analyze what they're asking, then craft a thoughtful answer the candidate can give. Use the background information to make it specific and relevant. Make it sound natural and confident - like the candidate is speaking, not reading a script.`
+Give a simple, clear answer using everyday words. Keep it short and natural.`
                     }
                 ];
 
@@ -269,8 +275,8 @@ Analyze what they're asking, then craft a thoughtful answer the candidate can gi
                 const completion = await openai.chat.completions.create({
                     model: 'gpt-4o-mini',
                     messages,
-                    temperature: 0.7,
-                    max_tokens: 250
+                    temperature: 0.5, // Lower temperature for simpler, more direct answers
+                    max_tokens: 150 // Shorter responses - keep it simple
                 });
 
                 const answer = completion.choices[0].message.content || '';
