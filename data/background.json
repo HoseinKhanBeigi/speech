@@ -38,5 +38,15 @@
     "id": "ai-blockchain-expertise",
     "title": "AI and Blockchain Expertise",
     "text": "Extensive experience with AI-powered features including intelligent dashboards and chatbots. Deep knowledge of LangChain, LLMs, and vector databases for conversational AI. Implemented KYC solutions with face detection and verification. Strong blockchain development skills with Solidity and web3.js for financial applications. Experience building data visualizations for complex financial and blockchain data using D3.js and Chart.js."
+  },
+  {
+    "id": "company-orgmeter",
+    "title": "OrgMeter - Company Information",
+    "text": "OrgMeter is a platform for the Merchant Cash Advance (MCA) industry. It helps with deal flow, tracking, and reporting. Key features: automated collections for debt recovery, efficient underwriting tools, automated bank statement analysis, document management, syndication tracking, centralized partner access, detailed reporting, and API integrations. The platform serves funders, syndicators, and Independent Sales Organizations (ISOs). OrgMeter processes over $7.5 billion in funding and 2+ million submissions. They focus on automation, API integrations, complex workflows, and financial technology solutions."
+  },
+  {
+    "id": "interview-orgmeter-focus",
+    "title": "What OrgMeter Looks For",
+    "text": "OrgMeter likely values: experience with automated systems and workflows, API integration skills, ability to handle complex financial data and workflows, knowledge of financial technology or MCA industry, experience with data processing and analysis tools, ability to build scalable platforms, experience with document management systems, and skills in building reporting and analytics features."
   }
 ]
