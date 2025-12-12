@@ -104,31 +104,30 @@ function updateGptResponse() {
     
     gptSection.style.display = 'block';
     
-    // Show only the LATEST question and answer (most recent)
-    const sortedPairs = [...qaPairs].sort((a, b) => b.number - a.number); // Sort descending
-    const latestPair = sortedPairs[0]; // Get the most recent
+    // Show ALL Q&A pairs in conversation format, sorted by number
+    const sortedPairs = [...qaPairs].sort((a, b) => a.number - b.number);
     
     let html = '';
     
-    if (!latestPair) {
+    if (sortedPairs.length === 0) {
         html = '<div style="color: #666; font-style: italic; text-align: center; padding: 20px;">Waiting for questions and answers...</div>';
     } else {
-        // Show only the latest Q&A pair with bigger, more prominent styling
-        html += `<div style="margin-bottom: 0; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%); border-radius: 8px; border: 2px solid #667eea; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);">`;
-        html += `<div style="font-weight: 700; font-size: 16px; color: #667eea; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">`;
-        html += `<span>📋 Question ${latestPair.number}:</span>`;
-        html += `</div>`;
-        html += `<div style="color: #1f2937; margin-bottom: 24px; font-size: 15px; line-height: 1.8; padding: 16px; background: white; border-radius: 6px; border-left: 4px solid #667eea; font-weight: 500;">"${latestPair.question}"</div>`;
-        html += `<div style="font-weight: 700; font-size: 16px; color: #10b981; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">`;
-        html += `<span>💡 Answer ${latestPair.number}:</span>`;
-        html += `</div>`;
-        html += `<div style="color: #1f2937; line-height: 1.8; padding: 16px; background: white; border-radius: 6px; border-left: 4px solid #10b981; font-size: 15px; font-weight: 400;">${latestPair.answer}</div>`;
-        html += `</div>`;
+        // Display all Q&A pairs in conversation format
+        sortedPairs.forEach(pair => {
+            html += `<div style="margin-bottom: 24px; padding: 0;">`;
+            // Question
+            html += `<div style="font-weight: 700; font-size: 15px; color: #667eea; margin-bottom: 8px;">Question ${pair.number}:</div>`;
+            html += `<div style="color: #1f2937; margin-bottom: 16px; font-size: 14px; line-height: 1.7; padding: 12px 16px; background: #f0f4ff; border-radius: 6px; border-left: 4px solid #667eea;">"${pair.question}"</div>`;
+            // Answer
+            html += `<div style="font-weight: 700; font-size: 15px; color: #10b981; margin-bottom: 8px;">Answer ${pair.number}:</div>`;
+            html += `<div style="color: #1f2937; line-height: 1.7; padding: 12px 16px; background: #f0fdf4; border-radius: 6px; border-left: 4px solid #10b981; font-size: 14px; margin-bottom: 8px;">${pair.answer}</div>`;
+            html += `</div>`;
+        });
     }
     
     gptOutput.innerHTML = html;
-    console.log(`✅ Updated GPT response in popup: Question ${latestPair?.number}`);
-    // Auto-scroll
+    console.log(`✅ Updated GPT responses in popup: ${sortedPairs.length} Q&A pairs`);
+    // Auto-scroll to bottom to show latest
     gptOutput.scrollTop = gptOutput.scrollHeight;
 }
 
@@ -190,36 +189,20 @@ startBtn.addEventListener('click', async () => {
             return;
         }
         
-        // Try to get stream ID, with retry logic for "active stream" error
-        let retries = 3;
-        while (retries > 0) {
-            try {
-                status.textContent = `Getting stream ID... (${retries} attempts left)`;
-                streamId = await chrome.tabCapture.getMediaStreamId({
-                    targetTabId: tab.id
-                });
-                
-                if (streamId) {
-                    break; // Success
-                }
-            } catch (error) {
-                const errorMsg = error.message || error.toString();
-                if (errorMsg.includes('active stream') || errorMsg.includes('Cannot capture')) {
-                    retries--;
-                    if (retries > 0) {
-                        console.log(`⚠️ Active stream detected, waiting and retrying... (${retries} retries left)`);
-                        status.textContent = `Tab is busy, retrying... (${retries} attempts left)`;
-                        // Wait longer and try stopping again
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        chrome.runtime.sendMessage({ action: 'stopListening' });
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        continue;
-                    } else {
-                        throw new Error('Tab is already being captured. Please refresh the Google Meet tab, then try again.');
-                    }
-                }
-                throw error; // Re-throw if not "active stream" error
+        // Try to get stream ID (single attempt - retries handled by background)
+        try {
+            status.textContent = 'Getting stream ID...';
+            streamId = await chrome.tabCapture.getMediaStreamId({
+                targetTabId: tab.id
+            });
+        } catch (error) {
+            const errorMsg = error.message || error.toString();
+            if (errorMsg.includes('active stream') || errorMsg.includes('Cannot capture')) {
+                status.textContent = '⚠️ Tab is busy. Please:\n1. Refresh the Google Meet tab\n2. Click "Stop Listening" if running\n3. Click "Start Listening" again';
+                status.classList.add('error');
+                return;
             }
+            throw error;
         }
         
         if (!streamId) {
