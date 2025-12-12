@@ -274,8 +274,8 @@ async function startListening(apiKey, sendResponse, streamIdFromPopup, tabIdFrom
 
         // Connect to AssemblyAI WebSocket
         // Add format_turns=true to get formatted transcripts
-        // Adjust turn detection parameters for better detection
-        const wsUrl = `wss://streaming.assemblyai.com/v3/ws?token=${token}&sample_rate=16000&speech_model=universal-streaming-multilingual&encoding=pcm_s16le&format_turns=true&end_of_turn_confidence_threshold=0.3&min_end_of_turn_silence_when_confident=300&max_turn_silence=2000`;
+        // Adjust turn detection parameters for better detection and accuracy
+        const wsUrl = `wss://streaming.assemblyai.com/v3/ws?token=${token}&sample_rate=16000&speech_model=universal-streaming-multilingual&encoding=pcm_s16le&format_turns=true&end_of_turn_confidence_threshold=0.5&min_end_of_turn_silence_when_confident=500&max_turn_silence=3000&word_boost=["interview","yourself","experience","project","background","skills"]`;
         console.log('🔗 Connecting to:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
         socket = new WebSocket(wsUrl);
 

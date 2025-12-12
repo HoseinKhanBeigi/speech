@@ -149,11 +149,13 @@ async function captureTabAudio(streamId) {
         };
 
         source.connect(audioProcessor);
-        // DON'T connect to destination - we only want to capture, not play back
-        // This prevents interfering with the original tab's audio playback
-        // audioProcessor.connect(audioContext.destination); // REMOVED
         
-        console.log('✅ Audio processing started (capture only, no playback), context state:', audioContext.state);
+        // IMPORTANT: Connect to destination to play audio back to user
+        // This allows you to hear the audio while it's being captured
+        // Chrome mutes the original tab, but we can play it back through this connection
+        audioProcessor.connect(audioContext.destination);
+        
+        console.log('✅ Audio processing started (capture + playback enabled), context state:', audioContext.state);
         console.log('Audio stream tracks:', audioStream.getAudioTracks().length);
         if (audioStream.getAudioTracks().length > 0) {
             const track = audioStream.getAudioTracks()[0];
@@ -234,8 +236,8 @@ async function captureTabAudioFallback(streamId) {
         audioProcessor.onaudioprocess = (e) => {
             const inputData = e.inputBuffer.getChannelData(0);
             
-            // Apply very strong gain amplification to boost audio levels
-            const GAIN = 20.0; // Amplify by 20x to make audio much louder
+            // Apply moderate gain to avoid distortion (too much gain causes poor transcription)
+            const GAIN = 3.0; // Reduced from 20x to 3x to prevent distortion
             const int16Array = new Int16Array(inputData.length);
             for (let i = 0; i < inputData.length; i++) {
                 let s = Math.max(-1, Math.min(1, inputData[i]));
@@ -265,9 +267,10 @@ async function captureTabAudioFallback(streamId) {
         };
 
         source.connect(audioProcessor);
-        // DON'T connect to destination - we only want to capture, not play back
-        // This prevents interfering with the original tab's audio playback
-        // audioProcessor.connect(audioContext.destination); // REMOVED
+        
+        // IMPORTANT: Connect to destination to play audio back to user
+        // This allows you to hear the audio while it's being captured
+        audioProcessor.connect(audioContext.destination);
         
         return { success: true };
     } catch (error) {
