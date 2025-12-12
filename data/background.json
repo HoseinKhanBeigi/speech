@@ -1,22 +1,42 @@
 [
   {
     "id": "profile",
-    "title": "Candidate background",
-    "text": "Full-stack developer with focus on TypeScript/JavaScript. Strengths in React, Next.js, Node.js/Express, and Chrome extensions. Experience with WebSockets, real-time audio streaming, and LLM integrations. Familiar with testing (Jest) and cloud basics. Comfortable optimizing performance and debugging complex browser issues."
+    "title": "Professional Summary",
+    "text": "Hossein Khan Beigi - Front-end Developer with 8 years of experience building scalable web applications using JavaScript, ReactJS, NextJS, and TypeScript. Specialized in blockchain development with Solidity and web3.js. Successfully delivered 15+ enterprise applications, achieving 40% performance improvements through optimized code and modern architecture. Led teams of up to 8 developers in implementing complex features while maintaining 95% code coverage through comprehensive testing."
   },
   {
-    "id": "project-meet-assistant",
-    "title": "Google Meet assistant project",
-    "text": "Built a Chrome extension that captures Google Meet audio, streams it to AssemblyAI for real-time transcription, and will route transcripts to GPT for replies. Uses Manifest V3 service worker, offscreen document for audio capture, AudioWorklet for processing, and a backend token proxy. Handles buffering to meet API chunk requirements and robust logging for debugging."
+    "id": "current-role",
+    "title": "Current Role - Lead Front-end Developer at kian Digital",
+    "text": "Lead Front-end Developer at kian Digital (Tehran, Iran) since January 2022. Developed and integrated AI-powered frontend features including intelligent dashboards and chatbots for blockchain-based financial applications. Worked extensively with LangChain, LLMs (Large Language Models), and vector databases to deliver advanced user experiences and conversational AI features. Implemented advanced KYC (Know Your Customer) solutions using face detection and verification, enhancing user onboarding security and compliance. Built data visualizations and analytics tools using D3.js and Chart.js for complex financial and blockchain data."
   },
   {
-    "id": "project-web-rtc",
-    "title": "Real-time communication work",
-    "text": "Implemented real-time features with WebRTC/WebSockets, including audio processing pipelines, buffering, and latency-sensitive messaging. Comfortable handling binary audio formats (PCM s16le), gain control, and chunk sizing for streaming APIs."
+    "id": "experience-supnex",
+    "title": "Senior Front-end Developer at Supnex",
+    "text": "Senior Front-end Developer at Supnex (Dubai, UAE - Remote) from January 2020 to December 2023. Accelerated team productivity by 10% through refactoring project resources, cutting feature implementation cycles by 25% and increasing code reusability by 40%. Established and enhanced a customized UI library incorporating Material Design principles, resulting in 40% reduction in bundle size and 70% increase in personalization metrics. Streamlined admin panel for product management, leading to 10% support team efficiency improvement and reducing customer ticket resolution time by 35%. Coordinated with DevOps teams to containerize applications using Docker, enhancing deployment efficiency by 25% and reducing deployment failures by 80%."
   },
   {
-    "id": "interview-notes",
-    "title": "Interview preparation notes",
-    "text": "Focus on concise, confident answers. Highlight strengths in debugging, real-time systems, and quick prototyping. Mention ability to integrate LLMs with streaming inputs and build reliable Chrome extensions for productivity."
+    "id": "experience-elevat",
+    "title": "Front-end Developer at Elevāt",
+    "text": "Front-end Developer at Elevāt (United States - Remote) from January 2017 to December 2020. Developed and maintained a scalable admin panel that improved data processing efficiency by 40% through enhanced querying and visualization features, reducing report generation time from 2 hours to 30 minutes. Directed a team of 8 developers across 2 high-impact projects, delivering 30% improvement in API response times through refined database schema design and efficient CRUD operations, resulting in 50% faster data retrieval."
+  },
+  {
+    "id": "technical-skills",
+    "title": "Technical Skills",
+    "text": "Programming Languages: JavaScript, TypeScript, PHP. Frontend Frameworks: React.js, Next.js, Angular, Vue.js, Polymer.js. Data Visualization: D3.js, Chart.js, Recharts, real-time data visualization. AI & Machine Learning: LLMs, LangChain, AI APIs, vector databases, machine learning basics. State Management: Redux, Zustand. Blockchain Development: Solidity, web3.js, blockchain applications. DevOps & Tools: Docker, Kubernetes, RESTful APIs, Material Design, Jest, Karma, Jasmine. Other: KYC, face detection, analytics tools, accessibility, responsive design, cross-functional collaboration."
+  },
+  {
+    "id": "education",
+    "title": "Education",
+    "text": "Master of Science in Artificial Intelligence from University of Sharif (January 2013 - December 2016). This educational background provides strong foundation in AI/ML concepts which complements practical experience with LLMs, LangChain, and vector databases in current role."
+  },
+  {
+    "id": "achievements",
+    "title": "Key Achievements",
+    "text": "Delivered 15+ enterprise applications with 40% performance improvements. Led teams of up to 8 developers. Achieved 95% code coverage through comprehensive testing. Reduced bundle size by 40% and increased personalization metrics by 70%. Improved data processing efficiency by 40%, reducing report generation from 2 hours to 30 minutes. Enhanced API response times by 30% and data retrieval by 50%. Processed 1M+ security events daily and 2M+ daily events in security monitoring systems."
+  },
+  {
+    "id": "ai-blockchain-expertise",
+    "title": "AI and Blockchain Expertise",
+    "text": "Extensive experience with AI-powered features including intelligent dashboards and chatbots. Deep knowledge of LangChain, LLMs, and vector databases for conversational AI. Implemented KYC solutions with face detection and verification. Strong blockchain development skills with Solidity and web3.js for financial applications. Experience building data visualizations for complex financial and blockchain data using D3.js and Chart.js."
   }
 ]
